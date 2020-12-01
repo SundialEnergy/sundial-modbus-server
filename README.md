@@ -9,6 +9,16 @@ Digital inputs on the server are mapped to plant IDs on Sundial
 Reading a digital input, will get advice from the corresponding plant
 in Sundial, and return the current recommendation to supply to grid.
 
+## Requirements
+
+You need Python 3.x and `pipenv`
+
+## Preparing
+
+- Navigate to the source folder
+- Run `pipenv shell`
+- Run `pipenv install`
+
 ## Running
 
 To run the server:
