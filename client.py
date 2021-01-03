@@ -15,15 +15,22 @@ port = int(os.environ.get('SUNDIAL_MODBUS_PORT'))
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect(('localhost', port))
 
-# Returns a message or Application Data Unit (ADU) specific for doing
-# Modbus TCP/IP.
 message = tcp.read_discrete_inputs(
     slave_id=1, starting_address=plant_id, quantity=1)
-
-# Response depends on Modbus function code. This particular returns the
-# amount of coils written, in this case it is.
 response = tcp.send_message(message, sock)
 
-print(response)
+print(f'Supply to grid: {response}')
+
+message = tcp.read_input_registers(
+    slave_id=1, starting_address=plant_id, quantity=1)
+response = tcp.send_message(message, sock)
+
+print(f'LGC price: {response}')
+
+message = tcp.read_input_registers(
+    slave_id=1, starting_address=10 + plant_id, quantity=1)
+response = tcp.send_message(message, sock)
+
+print(f'Spot price: {response}')
 
 sock.close()

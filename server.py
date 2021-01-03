@@ -37,19 +37,57 @@ conf.SIGNED_VALUES = True
 TCPServer.allow_reuse_address = True
 app = get_server(TCPServer, ('localhost', port), RequestHandler)
 
+last_recommendations = dict()
+
+
+def get_plant_recommendation(address):
+    global last_recommendations
+    now = datetime.utcnow().replace(tzinfo=pytz.utc)
+    print(f'Read advice from plant {address}')
+    try:
+        api_response = api_instance.advice_controller_get_plant_advice(address)
+        recommendations = api_response.recommendations
+        last_recommendations[address] = recommendations
+    except Exception as e:
+        print(f'Exception when getting recommendations {e}')
+        recommendations = last_recommendations[address]
+    current_recommendations = filter(
+        lambda r: r.start_at <= now and r.end_at >= now, recommendations)
+    return list(current_recommendations)[0]
+
 
 @app.route(slave_ids=[1], function_codes=[2], addresses=list(range(10)))
-def read_sundial_advice(slave_id, function_code, address):
+def read_sundial_supply_to_grid(slave_id, function_code, address):
     """"Return current Sundial generation recommendation"""
-    now = datetime.utcnow().replace(tzinfo=pytz.utc)
     try:
-        print(f'Read advice from plant {address}')
-        api_response = api_instance.advice_controller_get_plant_advice(address)
-        current_recommendations = filter(
-            lambda r: r.start_at <= now and r.end_at >= now, api_response.recommendations)
-        return list(current_recommendations)[0].supply_to_grid
+        recommendation = get_plant_recommendation(address)
+        return recommendation.supply_to_grid
     except ApiException as e:
-        print("Exception when calling AdviceControllerApi->advice_controller_get_plant_advice: %s\n" % e)
+        print("Exception when getting current supply_to_grid %s\n" % e)
+    # Zero by default
+    return 0
+
+
+@app.route(slave_ids=[1], function_codes=[4], addresses=list(range(10)))
+def read_sundial_lgc_price(slave_id, function_code, address):
+    """"Return current Sundial lgc price"""
+    try:
+        recommendation = get_plant_recommendation(address)
+        return int(recommendation.lgc_price * 100)
+    except ApiException as e:
+        print("Exception when getting current lgc_price %s\n" % e)
+    # Zero by default
+    return 0
+
+
+@app.route(slave_ids=[1], function_codes=[4], addresses=list(range(10, 20)))
+def read_sundial_spot_price(slave_id, function_code, address):
+    """"Return current Sundial spot price"""
+    try:
+        recommendation = get_plant_recommendation(address - 10)
+        return int(recommendation.energy_price * 100)
+    except ApiException as e:
+        print("Exception when getting current spot_price %s\n" % e)
     # Supply by default
     return True
 
