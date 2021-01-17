@@ -14,6 +14,8 @@ pylint = "*"
 autopep8 = "*"
 pytz = "*"
 isort = "*"
+python-dateutil = "*"
+cachetools = "*"
 
 [packages.sundial]
 git = "https://github.com/SundialEnergy/python-sundial.git@v1.1.0"

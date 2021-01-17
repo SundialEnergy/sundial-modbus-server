@@ -2,9 +2,12 @@
 # scripts/examples/simple_tcp_server.py
 from __future__ import print_function
 import logging
-from socketserver import TCPServer
+from socketserver import TCPServer, ThreadingMixIn
 from collections import defaultdict
+from cachetools import cached, TTLCache
 from datetime import datetime
+import dateutil.parser
+from threading import Lock
 import time
 import os
 import sundial
@@ -23,6 +26,8 @@ configuration = Configuration()
 configuration.host = os.environ.get('SUNDIAL_URL')
 api_key = os.environ.get('SUNDIAL_API_KEY')
 port = int(os.environ.get('SUNDIAL_MODBUS_PORT'))
+SLAVE_ID = 1
+PLANT_ID = 5
 
 # create an instance of the API class
 api_instance = sundial.AdviceControllerApi(
@@ -34,62 +39,116 @@ log_to_stream(level=logging.DEBUG)
 # Enable values to be signed (default is False).
 conf.SIGNED_VALUES = True
 
-TCPServer.allow_reuse_address = True
-app = get_server(TCPServer, ('localhost', port), RequestHandler)
 
-last_recommendations = dict()
-
-
-def get_plant_recommendation(address):
-    global last_recommendations
-    now = datetime.utcnow().replace(tzinfo=pytz.utc)
-    print(f'Read advice from plant {address}')
-    try:
-        api_response = api_instance.advice_controller_get_plant_advice(address)
-        recommendations = api_response.recommendations
-        last_recommendations[address] = recommendations
-    except Exception as e:
-        print(f'Exception when getting recommendations {e}')
-        recommendations = last_recommendations[address]
-    current_recommendations = filter(
-        lambda r: r.start_at <= now and r.end_at >= now, recommendations)
-    return list(current_recommendations)[0]
+class ThreadingServer(ThreadingMixIn, TCPServer):
+    pass
 
 
-@app.route(slave_ids=[1], function_codes=[2], addresses=list(range(10)))
+ThreadingServer.allow_reuse_address = True
+app = get_server(ThreadingServer, ('', port), RequestHandler)
+lock = Lock()
+
+
+@cached(cache=TTLCache(maxsize=1024, ttl=600), lock=lock)
+def get_plant_recommendations():
+    datetime.utcnow().replace(tzinfo=pytz.utc)
+    api_response = api_instance.advice_controller_get_plant_advice(
+        PLANT_ID)
+    return api_response.recommendations
+
+
+def toSigned(n, byte_count):
+    return int.from_bytes(n.to_bytes(byte_count, 'little'), 'little', signed=True)
+
+
+@app.route(slave_ids=[SLAVE_ID], function_codes=[2], addresses=list(range(5)))
 def read_sundial_supply_to_grid(slave_id, function_code, address):
-    """"Return current Sundial generation recommendation"""
+    """"Return Sundial generation recommendation supply_to_grid"""
+    recommendation_index = address
     try:
-        recommendation = get_plant_recommendation(address)
-        return recommendation.supply_to_grid
-    except ApiException as e:
+        recommendations = get_plant_recommendations()
+        return recommendations[recommendation_index].supply_to_grid
+    except IndexError as e:
         print("Exception when getting current supply_to_grid %s\n" % e)
-    # Zero by default
+    # False by default
+    return False
+
+
+@app.route(slave_ids=[SLAVE_ID], function_codes=[2], addresses=list(range(10, 15)))
+def read_sundial_recommendation_valid(slave_id, function_code, address):
+    """"Return Sundial generation recommendation validity"""
+    recommendation_index = address - 10
+    recommendations = get_plant_recommendations()
+    return len(recommendations) > recommendation_index
+
+
+@app.route(slave_ids=[SLAVE_ID], function_codes=[4], addresses=list(range(10)))
+def read_sundial_start_timestamp(slave_id, function_code, address):
+    """"Return Sundial recommendation start timestamp"""
+    recommendation_index = int(address / 2)
+    do_shift = bool(address % 2)
+    try:
+        recommendations = get_plant_recommendations()
+        recommendation = recommendations[recommendation_index]
+        ret = int(recommendation.start_at.timestamp())
+        print(f'Got ret {ret}')
+        if do_shift:
+            ret >>= 16
+        return toSigned(ret & 0xffff, 2)
+        print(f'This is what I am actually returning {real_ret}')
+        return real_ret
+    except IndexError as e:
+        print("Exception when getting start timestamp %s\n" % e)
     return 0
 
 
-@app.route(slave_ids=[1], function_codes=[4], addresses=list(range(10)))
+@app.route(slave_ids=[SLAVE_ID], function_codes=[4], addresses=list(range(10, 20)))
+def read_sundial_end_timestamp(slave_id, function_code, address):
+    """"Return Sundial recommendation end timestamp"""
+    recommendation_index = int((address - 10) / 2)
+    do_shift = bool(address % 2)
+    try:
+        recommendations = get_plant_recommendations()
+        recommendation = recommendations[recommendation_index]
+        ret = int(recommendation.end_at.timestamp())
+        if do_shift:
+            ret >>= 16
+        return toSigned(ret & 0xffff, 2)
+    except IndexError as e:
+        print("Exception when getting end timestamp %s\n" % e)
+    return 0
+
+
+@app.route(slave_ids=[SLAVE_ID], function_codes=[4], addresses=list(range(20, 25)))
 def read_sundial_lgc_price(slave_id, function_code, address):
-    """"Return current Sundial lgc price"""
+    """"Return Sundial recommendation lgc price"""
+    recommendation_index = address - 20
     try:
-        recommendation = get_plant_recommendation(address)
-        return int(recommendation.lgc_price * 100)
-    except ApiException as e:
-        print("Exception when getting current lgc_price %s\n" % e)
+        recommendations = get_plant_recommendations()
+        recommendation = recommendations[recommendation_index]
+        ret = int(recommendation.lgc_price * 100)
+        print(f'Returning LGC price {ret}')
+        return ret
+    except IndexError as e:
+        print("Exception when getting lgc_price %s\n" % e)
     # Zero by default
     return 0
 
 
-@app.route(slave_ids=[1], function_codes=[4], addresses=list(range(10, 20)))
+@app.route(slave_ids=[SLAVE_ID], function_codes=[4], addresses=list(range(30, 35)))
 def read_sundial_spot_price(slave_id, function_code, address):
-    """"Return current Sundial spot price"""
+    """"Return Sundial recommendation spot price"""
+    recommendation_index = address - 30
     try:
-        recommendation = get_plant_recommendation(address - 10)
-        return int(recommendation.energy_price * 100)
-    except ApiException as e:
-        print("Exception when getting current spot_price %s\n" % e)
-    # Supply by default
-    return True
+        recommendations = get_plant_recommendations()
+        recommendation = recommendations[recommendation_index]
+        ret = int(recommendation.energy_price * 100)
+        print(f'Returning spot price {ret}')
+        return ret
+    except IndexError as e:
+        print("Exception when getting spot_price %s\n" % e)
+    # Zero by default
+    return 0
 
 
 if __name__ == '__main__':
