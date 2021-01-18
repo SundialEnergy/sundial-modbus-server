@@ -86,7 +86,7 @@ def read_sundial_recommendation_valid(slave_id, function_code, address):
 def read_sundial_start_timestamp(slave_id, function_code, address):
     """"Return Sundial recommendation start timestamp"""
     recommendation_index = int(address / 2)
-    do_shift = bool(address % 2)
+    do_shift = not bool(address % 2)
     try:
         recommendations = get_plant_recommendations()
         recommendation = recommendations[recommendation_index]
@@ -95,8 +95,6 @@ def read_sundial_start_timestamp(slave_id, function_code, address):
         if do_shift:
             ret >>= 16
         return toSigned(ret & 0xffff, 2)
-        print(f'This is what I am actually returning {real_ret}')
-        return real_ret
     except IndexError as e:
         print("Exception when getting start timestamp %s\n" % e)
     return 0
@@ -106,7 +104,7 @@ def read_sundial_start_timestamp(slave_id, function_code, address):
 def read_sundial_end_timestamp(slave_id, function_code, address):
     """"Return Sundial recommendation end timestamp"""
     recommendation_index = int((address - 10) / 2)
-    do_shift = bool(address % 2)
+    do_shift = not bool(address % 2)
     try:
         recommendations = get_plant_recommendations()
         recommendation = recommendations[recommendation_index]
