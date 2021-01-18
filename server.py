@@ -57,10 +57,6 @@ def get_plant_recommendations():
     return api_response.recommendations
 
 
-def toSigned(n, byte_count):
-    return int.from_bytes(n.to_bytes(byte_count, 'little'), 'little', signed=True)
-
-
 @app.route(slave_ids=[SLAVE_ID], function_codes=[2], addresses=list(range(5)))
 def read_sundial_supply_to_grid(slave_id, function_code, address):
     """"Return Sundial generation recommendation supply_to_grid"""
