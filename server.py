@@ -26,8 +26,8 @@ configuration = Configuration()
 configuration.host = os.environ.get('SUNDIAL_URL')
 api_key = os.environ.get('SUNDIAL_API_KEY')
 port = int(os.environ.get('SUNDIAL_MODBUS_PORT'))
+plant_id = os.environ.get('PLANT_ID')
 SLAVE_ID = 1
-PLANT_ID = 5
 
 # create an instance of the API class
 api_instance = sundial.AdviceControllerApi(
@@ -53,7 +53,7 @@ lock = Lock()
 def get_plant_recommendations():
     datetime.utcnow().replace(tzinfo=pytz.utc)
     api_response = api_instance.advice_controller_get_plant_advice(
-        PLANT_ID)
+        plant_id)
     return api_response.recommendations
 
 
