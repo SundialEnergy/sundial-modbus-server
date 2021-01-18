@@ -26,13 +26,13 @@ response = tcp.send_message(message, sock)
 print(f'Recommendation valid: {response}')
 
 message = tcp.read_input_registers(
-    slave_id=1, starting_address=0, quantity=5)
+    slave_id=1, starting_address=0, quantity=10)
 response = tcp.send_message(message, sock)
 
 print(f'Start timestamp: {response}')
 
 message = tcp.read_input_registers(
-    slave_id=1, starting_address=10, quantity=5)
+    slave_id=1, starting_address=10, quantity=10)
 response = tcp.send_message(message, sock)
 
 print(f'End timestamp: {response}')
