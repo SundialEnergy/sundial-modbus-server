@@ -26,7 +26,7 @@ configuration = Configuration()
 configuration.host = os.environ.get('SUNDIAL_URL')
 api_key = os.environ.get('SUNDIAL_API_KEY')
 port = int(os.environ.get('SUNDIAL_MODBUS_PORT'))
-plant_id = os.environ.get('PLANT_ID')
+plant_id = os.environ.get('SUNDIAL_PLANT_ID')
 SLAVE_ID = 1
 
 # create an instance of the API class
