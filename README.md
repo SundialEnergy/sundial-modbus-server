@@ -28,21 +28,31 @@ Incoming recommendations are mapped to different Modbus addresses:
 
 ### Input Registers
 
+| Address | Value                                                        |
+| ------- | ------------------------------------------------------------ |
+| 0 Most  | significant two bytes of start timestamp of recommendation 0 |
+| 1 Least | significant two bytes of start timestamp of recommendation 0 |
+| 2 Most  | significant two bytes of start timestamp of recommendation 1 |
+| 3 Least | significant two bytes of start timestamp of recommendation 1 |
+| 4 Most  | significant two bytes of start timestamp of recommendation 2 |
+| 5 Least | significant two bytes of start timestamp of recommendation 2 |
+| 6 Most  | significant two bytes of start timestamp of recommendation 3 |
+| 7 Least | significant two bytes of start timestamp of recommendation 3 |
+| 8 Most  | significant two bytes of start timestamp of recommendation 4 |
+| 9 Least | significant two bytes of start timestamp of recommendation 4 |
+
 | Address | Value                                                            |
 | ------- | ---------------------------------------------------------------- |
-| 0       | Least significant 15 bits of start timestamp of recommendation 0 |
-| 1       | Least significant 15 bits of start timestamp of recommendation 1 |
-| 2       | Least significant 15 bits of start timestamp of recommendation 2 |
-| 3       | Least significant 15 bits of start timestamp of recommendation 3 |
-| 4       | Least significant 15 bits of start timestamp of recommendation 4 |
-
-| Address | Value                                                          |
-| ------- | -------------------------------------------------------------- |
-| 0       | Least significant 15 bits of end timestamp of recommendation 0 |
-| 1       | Least significant 15 bits of end timestamp of recommendation 1 |
-| 2       | Least significant 15 bits of end timestamp of recommendation 2 |
-| 3       | Least significant 15 bits of end timestamp of recommendation 3 |
-| 4       | Least significant 15 bits of end timestamp of recommendation 4 |
+| 10      | Most significant two bytes of end timestamp of recommendation 0  |
+| 11      | Least significant two bytes of end timestamp of recommendation 0 |
+| 12      | Most significant two bytes of end timestamp of recommendation 1  |
+| 13      | Least significant two bytes of end timestamp of recommendation 1 |
+| 14      | Most significant two bytes of end timestamp of recommendation 2  |
+| 15      | Least significant two bytes of end timestamp of recommendation 2 |
+| 16      | Most significant two bytes of end timestamp of recommendation 3  |
+| 17      | Least significant two bytes of end timestamp of recommendation 3 |
+| 18      | Most significant two bytes of end timestamp of recommendation 4  |
+| 19      | Least significant two bytes of end timestamp of recommendation 4 |
 
 | Address | Value                         |
 | ------- | ----------------------------- |
