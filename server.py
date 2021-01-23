@@ -149,6 +149,18 @@ def read_sundial_spot_price(slave_id, function_code, address):
     return 0
 
 
+@app.route(slave_ids=[SLAVE_ID], function_codes=[4], addresses=[35])
+def read_sundial_current_recommendation(slave_id, function_code, address):
+    """"Return the index of the "current" Sundial recommendation"""
+    now = datetime.utcnow().replace(tzinfo=pytz.utc)
+    recommendations = get_plant_recommendations()
+    for i in range(len(recommendations)):
+        r = recommendations[i]
+        if r.start_at <= now and r.end_at >= now:
+            return i
+    raise IndexError('Cannot find current recommendation')
+
+
 if __name__ == '__main__':
     try:
         app.serve_forever()

@@ -49,4 +49,10 @@ response = tcp.send_message(message, sock)
 
 print(f'Spot price: {response}')
 
+message = tcp.read_input_registers(
+    slave_id=1, starting_address=35, quantity=1)
+response = tcp.send_message(message, sock)
+
+print(f'Current recommendation: {response}')
+
 sock.close()

@@ -70,6 +70,10 @@ Incoming recommendations are mapped to different Modbus addresses:
 | 33      | Spot price of recommendation 3 |
 | 34      | Spot price of recommendation 4 |
 
+| Address | Value                           |
+| ------- | ------------------------------- |
+| 35      | Index of current recommendation |
+
 ## Requirements
 
 You need Python 3.x and `pipenv`
