@@ -73,6 +73,7 @@ def read_sundial_supply_to_grid(slave_id, function_code, address):
         supply_to_grid = recommendations[recommendation_index].supply_to_grid
 
         if supply_to_grid is None:
+            global latest_non_null_supply_to_grid
             return latest_non_null_supply_to_grid
         else:
             return supply_to_grid
