@@ -48,8 +48,11 @@ ThreadingServer.allow_reuse_address = True
 app = get_server(ThreadingServer, ('', port), RequestHandler)
 lock = Lock()
 
+# What was the last non-null recommendation Sundial provided?
+latest_non_null_supply_to_grid = False
 
-@cached(cache=TTLCache(maxsize=1024, ttl=600), lock=lock)
+
+@cached(cache=TTLCache(maxsize=1024, ttl=10), lock=lock)
 def get_plant_recommendations():
     datetime.utcnow().replace(tzinfo=pytz.utc)
     api_response = api_instance.advice_controller_get_plant_advice(
@@ -67,7 +70,12 @@ def read_sundial_supply_to_grid(slave_id, function_code, address):
     recommendation_index = address
     try:
         recommendations = get_plant_recommendations()
-        return recommendations[recommendation_index].supply_to_grid
+        supply_to_grid = recommendations[recommendation_index].supply_to_grid
+
+        if supply_to_grid is None:
+            return latest_non_null_supply_to_grid
+        else:
+            return supply_to_grid
     except IndexError as e:
         print("Exception when getting current supply_to_grid %s\n" % e)
     # False by default
@@ -157,6 +165,9 @@ def read_sundial_current_recommendation(slave_id, function_code, address):
     for i in range(len(recommendations)):
         r = recommendations[i]
         if r.start_at <= now and r.end_at >= now:
+            if r.supply_to_grid is not None:
+                global latest_non_null_supply_to_grid
+                latest_non_null_supply_to_grid = r.supply_to_grid
             return i
     raise IndexError('Cannot find current recommendation')
 

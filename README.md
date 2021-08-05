@@ -89,11 +89,11 @@ You need Python 3.x and `pipenv`
 To run the server:
 
 ```
-SUNDIAL_API_KEY=<my sundial API key> SUNDIAL_URL=https://api.sundial.energy SUNDIAL_MODBUS_PORT=<some port> python server.py
+SUNDIAL_API_KEY=<my sundial API key> SUNDIAL_URL=https://api.sundial.energy SUNDIAL_MODBUS_PORT=5000 SUNDIAL_PLANT_ID=5 python server.py
 ```
 
 This repository also includes a test client. To run it:
 
 ```
-SUNDIAL_PLANT_ID=5 SUNDIAL_MODBUS_PORT=<some port> python ./client.py
+SUNDIAL_MODBUS_PORT=5000 python ./client.py
 ```
